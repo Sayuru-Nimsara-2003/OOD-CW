@@ -38,14 +38,15 @@ public class DatabaseHandler {
                 ");";
 
         String createUserActionsTable = "CREATE TABLE IF NOT EXISTS UserActions (" +
-                "actionID INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "userID INTEGER NOT NULL," +
                 "articleID INTEGER NOT NULL," +
-                "action TEXT NOT NULL," +
+                "action TEXT NOT NULL CHECK (action IN ('like', 'dislike', 'view'))," +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                "PRIMARY KEY (userID, articleID, action)," +
                 "FOREIGN KEY(userID) REFERENCES User(userID)," +
                 "FOREIGN KEY(articleID) REFERENCES Articles(articleID)" +
                 ");";
+
 
         String createArticlesTable = "CREATE TABLE IF NOT EXISTS Articles (" +
                 "articleID INTEGER PRIMARY KEY," +
@@ -243,6 +244,233 @@ public class DatabaseHandler {
 
         } catch (SQLException e) {
             System.out.println("Error removing user: " + e.getMessage());
+        }
+    }
+
+    public static int assignArticleID(){
+        String query = "SELECT MAX(ArticleID) FROM Article;";
+        int newArticleID = 1; // Default starting userID
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            if (rs.next()) {
+                int lastArticleID = rs.getInt(1); // Get the MAX(userID)
+                if (!rs.wasNull()) {          // Check if the result was NULL
+                    newArticleID = lastArticleID + 1;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error assigning ArticleOD: " + e.getMessage());
+        }
+
+        return newArticleID;
+    }
+
+    // For storeInDatabase method --- Article class
+    public static void storeAnArticle(String title, String content, String category, String path) {
+        int articleID = assignArticleID(); // Generate the articleID
+
+        // SQL query to insert a new article into the Articles table
+        String insertArticleQuery = "INSERT INTO Articles (articleID, title, content, category, articlePath) VALUES (?, ?, ?, ?, ?);";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(insertArticleQuery)) {
+
+            // Set the values for the placeholders
+            pstmt.setInt(1, articleID); // Set articleID
+            pstmt.setString(2, title);  // Set title
+            pstmt.setString(3, content); // Set content
+            pstmt.setString(4, category); // Set category
+            pstmt.setString(5, path); // Set articlePath
+
+            // Execute the insert query
+            int rowsInserted = pstmt.executeUpdate();
+
+            if (rowsInserted > 0) {
+                System.out.println("Article stored successfully with articleID: " + articleID);
+            } else {
+                System.out.println("Failed to store the article.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error storing the article: " + e.getMessage());
+        }
+    }
+
+    // For viewArticles method in UserActions class
+    public static void addViewUserAction(String userName, String title) {
+        // Query to get userID based on userName
+        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
+
+        // Query to get articleID based on title
+        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
+
+        // Query to insert into UserActions
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'view')";
+
+        try (Connection conn = DriverManager.getConnection(URL)) {
+            conn.setAutoCommit(false); // Enable transaction management
+
+            // Retrieve userID
+            int userID = -1;
+            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
+                pstmtUser.setString(1, userName);
+                ResultSet rsUser = pstmtUser.executeQuery();
+                if (rsUser.next()) {
+                    userID = rsUser.getInt("userID");
+                } else {
+                    System.out.println("User not found: " + userName);
+                    return;
+                }
+            }
+
+            // Retrieve articleID
+            int articleID = -1;
+            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
+                pstmtArticle.setString(1, title);
+                ResultSet rsArticle = pstmtArticle.executeQuery();
+                if (rsArticle.next()) {
+                    articleID = rsArticle.getInt("articleID");
+                } else {
+                    System.out.println("Article not found: " + title);
+                    return;
+                }
+            }
+
+            // Insert into UserActions
+            try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
+                pstmtInsert.setInt(1, userID);
+                pstmtInsert.setInt(2, articleID);
+                int rowsInserted = pstmtInsert.executeUpdate();
+                if (rowsInserted > 0) {
+                    System.out.println("View action added successfully for user: " + userName);
+                } else {
+                    System.out.println("Failed to add view action.");
+                }
+            }
+
+            conn.commit(); // Commit transaction
+        } catch (SQLException e) {
+            System.out.println("Error adding view action: " + e.getMessage());
+        }
+    }
+
+    // For likeArticle method -- UserActions class
+    public static void addLikeUserAction(String userName, String title) {
+        // Query to get userID based on userName
+        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
+
+        // Query to get articleID based on title
+        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
+
+        // Query to insert into UserActions
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'like')";
+
+        try (Connection conn = DriverManager.getConnection(URL)) {
+            conn.setAutoCommit(false); // Enable transaction management
+
+            // Retrieve userID
+            int userID = -1;
+            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
+                pstmtUser.setString(1, userName);
+                ResultSet rsUser = pstmtUser.executeQuery();
+                if (rsUser.next()) {
+                    userID = rsUser.getInt("userID");
+                } else {
+                    System.out.println("User not found: " + userName);
+                    return;
+                }
+            }
+
+            // Retrieve articleID
+            int articleID = -1;
+            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
+                pstmtArticle.setString(1, title);
+                ResultSet rsArticle = pstmtArticle.executeQuery();
+                if (rsArticle.next()) {
+                    articleID = rsArticle.getInt("articleID");
+                } else {
+                    System.out.println("Article not found: " + title);
+                    return;
+                }
+            }
+
+            // Insert into UserActions
+            try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
+                pstmtInsert.setInt(1, userID);
+                pstmtInsert.setInt(2, articleID);
+                int rowsInserted = pstmtInsert.executeUpdate();
+                if (rowsInserted > 0) {
+                    System.out.println("Like action added successfully for user: " + userName);
+                } else {
+                    System.out.println("Failed to add like action.");
+                }
+            }
+
+            conn.commit(); // Commit transaction
+        } catch (SQLException e) {
+            System.out.println("Error adding like action: " + e.getMessage());
+        }
+    }
+
+
+    // For dislikeArticle method -- UserActions class
+    public static void addDislikeUserAction(String userName, String title) {
+        // Query to get userID based on userName
+        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
+
+        // Query to get articleID based on title
+        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
+
+        // Query to insert into UserActions
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'dislike')";
+
+        try (Connection conn = DriverManager.getConnection(URL)) {
+            conn.setAutoCommit(false); // Enable transaction management
+
+            // Retrieve userID
+            int userID = -1;
+            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
+                pstmtUser.setString(1, userName);
+                ResultSet rsUser = pstmtUser.executeQuery();
+                if (rsUser.next()) {
+                    userID = rsUser.getInt("userID");
+                } else {
+                    System.out.println("User not found: " + userName);
+                    return;
+                }
+            }
+
+            // Retrieve articleID
+            int articleID = -1;
+            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
+                pstmtArticle.setString(1, title);
+                ResultSet rsArticle = pstmtArticle.executeQuery();
+                if (rsArticle.next()) {
+                    articleID = rsArticle.getInt("articleID");
+                } else {
+                    System.out.println("Article not found: " + title);
+                    return;
+                }
+            }
+
+            // Insert into UserActions
+            try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
+                pstmtInsert.setInt(1, userID);
+                pstmtInsert.setInt(2, articleID);
+                int rowsInserted = pstmtInsert.executeUpdate();
+                if (rowsInserted > 0) {
+                    System.out.println("Dislike action added successfully for user: " + userName);
+                } else {
+                    System.out.println("Failed to add dislike action.");
+                }
+            }
+
+            conn.commit(); // Commit transaction
+        } catch (SQLException e) {
+            System.out.println("Error adding dislike action: " + e.getMessage());
         }
     }
 
