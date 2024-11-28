@@ -12,4 +12,6 @@ public class Main {
         // Close the connection
         DatabaseHandler.closeConnection(conn);
     }
+
+
 }
