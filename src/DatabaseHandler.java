@@ -34,7 +34,7 @@ public class DatabaseHandler {
                 "userID INTEGER PRIMARY KEY," +
                 "userName TEXT NOT NULL," +
                 "password TEXT NOT NULL," +
-                "isPremium INTEGER NOT NULL" +
+                "isAdmin INTEGER NOT NULL" +
                 ");";
 
         String createUserActionsTable = "CREATE TABLE IF NOT EXISTS UserActions (" +
@@ -47,14 +47,13 @@ public class DatabaseHandler {
                 "FOREIGN KEY(articleID) REFERENCES Articles(articleID)" +
                 ");";
 
-
         String createArticlesTable = "CREATE TABLE IF NOT EXISTS Articles (" +
                 "articleID INTEGER PRIMARY KEY," +
                 "title TEXT NOT NULL," +
                 "content TEXT NOT NULL," +
                 "category TEXT NOT NULL," +
                 "articlePath TEXT NOT NULL," +
-                "createdAt DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                "publishDate DATE NOT NULL" +
                 ");";
 
         String createScoresTable = "CREATE TABLE IF NOT EXISTS Scores (" +
@@ -141,27 +140,6 @@ public class DatabaseHandler {
     }
 
 
-    // For goPremium method --- userAccountServices class
-    public static void goPremium(String userName){
-        String updateIsPremium = "UPDATE User SET isPremium = 1 WHERE userName = ?;";
-
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement pstmt = conn.prepareStatement(updateIsPremium)) {
-
-            pstmt.setString(1, userName); // Set the userName parameter in the query
-            int rowsUpdated = pstmt.executeUpdate(); // Execute the update query
-
-            if (rowsUpdated > 0) {
-                System.out.println("User " + userName + " has been updated to Premium.");
-            } else {
-                System.out.println("User " + userName + " not found.");
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error updating user to Premium: " + e.getMessage());
-        }
-    }
-
     // For login method --- userAccountServices class
     public static boolean passwordMatching(String userName, String password) {
         // Query to fetch the password for the given userName
@@ -186,6 +164,31 @@ public class DatabaseHandler {
         }
         return false;
     }
+
+    public static boolean isAdminUser(String userName) {
+        String query = "SELECT isAdmin FROM User WHERE userName = ?;";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            // Set the userName parameter
+            pstmt.setString(1, userName);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Check if the isAdmin field is 1
+                    return rs.getInt("isAdmin") == 1;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking admin status: " + e.getMessage());
+        }
+
+        return false; // Return false if userName not found or error occurs
+    }
+
+
+
 
     // For deleteAccount method --- userAccountServices class
     public static void removeUser(String userName) {

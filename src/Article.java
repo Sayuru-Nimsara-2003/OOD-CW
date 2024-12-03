@@ -1,16 +1,23 @@
 public class Article {
     private String articleID;
-    private String Title;
+    private String title;
     private String content;
     private String path;
     private String category;
-    private int score;    // Based on no. of likes, dislikes and views
 
     public void storeInDatabase(String title, String content, String category, String path){
         DatabaseHandler.storeAnArticle(title, content, category, path);
     }
 
-    public void displayArticle(){
+    public String getArticleID(){return articleID;}
+    public String getTitle(){return title;}
+    public String getContent(){return content;}
+    public String getPath(){return path;}
+    public String getCategory(){return category;}
+
+
+    public void displayArticles(){
+
 
     }
 }

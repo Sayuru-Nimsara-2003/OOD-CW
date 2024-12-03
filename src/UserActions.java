@@ -1,18 +1,21 @@
 public class UserActions {
     private User user;
 
-    public void viewArticle(String userName, String articleTitle){
+    public UserActions(User user){
+        this.user = user;
+    }
+
+    public void viewArticle(User user, String articleTitle){
         // View the article in a window
-
-        DatabaseHandler.addViewUserAction(userName, articleTitle);
+        DatabaseHandler.addViewUserAction(user.getUserName(), articleTitle);
     }
 
-    public void likeArticle(String userName, String articleTitle){
-        DatabaseHandler.addLikeUserAction(userName, articleTitle);
+    public void likeArticle(User user, String articleTitle){
+        DatabaseHandler.addLikeUserAction(user.getUserName(), articleTitle);
     }
 
-    public void dislikeArticle(String userName, String articleTitle){
-        DatabaseHandler.addDislikeUserAction(userName, articleTitle);
+    public void dislikeArticle(User user, String articleTitle){
+        DatabaseHandler.addDislikeUserAction(user.getUserName(), articleTitle);
     }
 
     public void saveArticle(){
