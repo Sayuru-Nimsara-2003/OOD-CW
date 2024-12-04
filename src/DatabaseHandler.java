@@ -189,9 +189,8 @@ public class DatabaseHandler {
 
 
 
-
     // For deleteAccount method --- userAccountServices class
-    public static void removeUser(String userName) {
+    public static void logOutUser(String userName) {
         // Query to find userID based on userName
         String findUserIDQuery = "SELECT userID FROM User WHERE userName = ?;";
 
@@ -475,6 +474,7 @@ public class DatabaseHandler {
         } catch (SQLException e) {
             System.out.println("Error adding dislike action: " + e.getMessage());
         }
+
     }
 
 

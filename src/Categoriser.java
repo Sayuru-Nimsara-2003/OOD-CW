@@ -7,18 +7,18 @@ public abstract class Categoriser {
     public abstract void categorise(String text);
 }
 
-class KeywordExtractor extends Categoriser{    // Replace class name with the model name
+class KeywordExtractor extends Categoriser{
 
         // Map of categories to keywords
         public static final Map<String, List<String>> categoryKeywords = new HashMap<>();
 
         static {
             // Initializing keywords for each category (all lowercase)
-            categoryKeywords.put("Health", Arrays.asList("health", "doctor", "medicine", "hospital", "disease", "treatment", "clinic", "die", "bacteri", "disease", "pharm", "health", "drugs", "virus", "obesity", "protein", "nutrit", "vitamin"));
-            categoryKeywords.put("AI", Arrays.asList("artificial intelligence", "ai", "machine learning", "neural network", "algorithm", "deep learning", "gemini", "openai", "alexa", "ai", "large language", "model", "openai", "chatgpt", "chatgpt", "generative ai", "clone", "siri","openai", "chatgpt", "chatgpt", "generative ai", "gauss", "multimodal ai", "chatbot", "chatbot"));
-            categoryKeywords.put("Technology", Arrays.asList("ev","car","rocket","car","rocket","metro","tech", "innovation", "software", "hardware", "gadgets", "internet", "app", "chip", "electric", "electronic","facebook", "nanotech", "robot", "material"));
-            categoryKeywords.put("Politics", Arrays.asList("elect", "government", "policy", "politician", "president", "congress", "prime minister", "diplomat", "city", "province", "vote", "voting", "parliament", "bill", "state", "senate", "sanction", "russia"));
-            categoryKeywords.put("Sports", Arrays.asList("sports", "football", "basketball", "team", "tournament", "score", "victory", "lost", "cricket", "athlet", "match", "player", "cup"));
+            categoryKeywords.put("Health", Arrays.asList("health", "doctor", "medicine", "hospital", "disease", "treatment", "clinic", "die", "bacteri", "disease", "pharm", "health", "drugs", "virus", "obesity", "protein", "nutrit", "vitamin", "food","sleep", "brain", "brain", "mental", "mental"));
+            categoryKeywords.put("AI", Arrays.asList("artificial intelligence", "ai","agi", "machine learning", "neural network", "algorithm", "deep learning", "gemini", "openai", "alexa", "ai", "ai", "ai", "large language", "model", "openai", "chatgpt","chat gpt", "ai tools", "chatgpt", "generative ai", "clone", "siri","openai", "chatgpt", "chatgpt", "generative ai", "gauss", "multimodal ai", "chatbot", "chatbot"));
+            categoryKeywords.put("Technology", Arrays.asList("ev","tech", "car","rocket","car","rocket","metro","tech", "device", "tiktok", "google", "youtube", "phone", "software", "hardware", "gadgets", "internet", "app", "chip", "electric", "electronic","facebook", "nanotech", "robot", "material"));
+            categoryKeywords.put("Politics", Arrays.asList("elect", "government", "policy", "war", "economy", "politic","politician", "president", "congress", "prime minister", "diplomat", "city", "province", "vote", "voting", "parliament", "bill", "state", "senate", "sanction", "russia"));
+            categoryKeywords.put("Sports", Arrays.asList("sports", "football", "basketball", "rugby", "league", "cricket", "ball", "chess", "captain", "team", "tournament", "score", "victory", "won", "team", "lost", "cricket", "athlet", "match", "play", "cup", "player"));
         }
 
         // Method to categorize the text based on keywords
@@ -41,7 +41,7 @@ class KeywordExtractor extends Categoriser{    // Replace class name with the mo
                 categoryScores.put(category, score);
             }
 
-            // Find the category with the highest score
+            // category with the highest score
             String selectedCategory = null;
             int maxScore = -1;
 

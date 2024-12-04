@@ -14,10 +14,9 @@ public class Driver {
 
         // Status
         boolean loggedIn = false;
-
         // Login or Register select
         DatabaseHandler.connect();
-        initialLoginMenu(scanner);
+        initialMenu(scanner);
     }
 
     public static void initialMenu(Scanner scanner){
@@ -38,10 +37,10 @@ public class Driver {
                 initialRegisterMenu(scanner);
             } else if (userInput.equalsIgnoreCase("l")) {
                 validInput = true;
-                // go to the initial_register menu
+                initialLoginMenu(scanner);
             } else if (userInput.equalsIgnoreCase("q")) {
                 validInput = true;
-                // quit the program
+                System.exit(0);
             } else {
                 System.out.println(RED + "Invalid Input! Retry\n"+ RESET); // Red color
             }
