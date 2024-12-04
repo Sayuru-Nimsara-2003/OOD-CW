@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.ArrayList;
 
 public class DatabaseHandler {
     private static final String URL = "jdbc:sqlite:news_recommendation_system.db";
@@ -52,7 +53,7 @@ public class DatabaseHandler {
                 "title TEXT NOT NULL," +
                 "content TEXT NOT NULL," +
                 "category TEXT NOT NULL," +
-                "articlePath TEXT NOT NULL," +
+                "articleLink TEXT NOT NULL," +
                 "publishDate DATE NOT NULL" +
                 ");";
 
@@ -276,7 +277,7 @@ public class DatabaseHandler {
         int articleID = assignArticleID(); // Generate the articleID
 
         // SQL query to insert a new article into the Articles table
-        String insertArticleQuery = "INSERT INTO Articles (articleID, title, content, category, articlePath) VALUES (?, ?, ?, ?, ?);";
+        String insertArticleQuery = "INSERT INTO Articles (articleID, title, content, category, articleLink) VALUES (?, ?, ?, ?, ?);";
 
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(insertArticleQuery)) {
@@ -286,7 +287,7 @@ public class DatabaseHandler {
             pstmt.setString(2, title);  // Set title
             pstmt.setString(3, content); // Set content
             pstmt.setString(4, category); // Set category
-            pstmt.setString(5, path); // Set articlePath
+            pstmt.setString(5, path); // Set articleLink
 
             // Execute the insert query
             int rowsInserted = pstmt.executeUpdate();
@@ -473,6 +474,50 @@ public class DatabaseHandler {
             conn.commit(); // Commit transaction
         } catch (SQLException e) {
             System.out.println("Error adding dislike action: " + e.getMessage());
+        }
+
+    }
+
+
+    // Create a array list of all existing articles (Only when the program starts)
+    public static void retrieveAllArticlesFromDB(){
+
+        // SQL query to select all articles from the table
+        String selectArticlesQuery = "SELECT * FROM Articles;";
+
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             Statement stmt = conn.createStatement()) {
+
+            // Execute the query to retrieve articles
+            ResultSet rs = stmt.executeQuery(selectArticlesQuery);
+
+            // Temporary list to store retrieved articles
+            ArrayList<Article> articles = new ArrayList<>();
+
+            // Iterate through the result set
+            while (rs.next()) {
+                // Retrieve data for each article
+                int articleID = rs.getInt("articleID");
+                String title = rs.getString("title");
+                String content = rs.getString("content");
+                String category = rs.getString("category");
+                String articleLink = rs.getString("articleLink");
+
+                // Create an Article instance
+                Article article = new Article(articleID, title, content, category, articleLink);
+
+                // Add the Article to the list
+                articles.add(article);
+            }
+
+            // Set the retrieved articles in the ArticleManager
+            ArticleManager.allArticles = articles;
+
+            System.out.println("Articles retrieved successfully and stored in ArticleManager.");
+
+        } catch (SQLException e) {
+            System.out.println("Error accessing the database: " + e.getMessage());
         }
 
     }

@@ -2,7 +2,6 @@ public class User {             // Instances of this will be created when a user
     private String userName;
     private String password;
 
-
     public void setUserName(String userName){
         this.userName = userName;
     }
