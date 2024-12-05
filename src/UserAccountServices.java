@@ -1,6 +1,4 @@
-import java.util.Scanner;
-
-public class UserServices implements UserAccountManager{
+public class UserAccountServices implements UserAccountManager{
 
     public static final String RESET = "\u001B[0m"; // Reset to default color
     public static final String RED = "\u001B[31m";  // Red text
@@ -54,9 +52,15 @@ public class UserServices implements UserAccountManager{
     public void Register(User user, String userName, String password){
         user.setUserName(userName);
         user.setPassword(password);
-        DatabaseHandler.addNewUser(userName, password);
+        DatabaseHandler.addNewUser(user, userName, password);
     }
 
+    @Override
+    public void logout(User user){
+        user.setUserId(-1);
+        user.setUserName(null);
+        user.setPassword(null);
+    }
 
 
 }

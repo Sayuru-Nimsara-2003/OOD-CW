@@ -72,12 +72,12 @@ public class Driver {
             if (userInput.equalsIgnoreCase("u")) {
                 System.out.print("  Enter username: ");
                 userNameInput = scanner.nextLine();
-                userNameOK = UserServices.userNameValidation(userNameInput);
+                userNameOK = UserAccountServices.userNameValidation(userNameInput);
             } else if (userInput.equalsIgnoreCase("p")) {
                 if (userNameOK) {
                     System.out.print("  Enter password: ");
                     passwordInput = scanner.nextLine();
-                    passwordOK = UserServices.PasswordValidation(passwordInput);
+                    passwordOK = UserAccountServices.PasswordValidation(passwordInput);
                 } else {
                     System.out.println(RED + "  Please provide a valid username first in Register Menu" + RESET);
                 }
@@ -91,12 +91,8 @@ public class Driver {
             if (userNameOK && passwordOK) {
                 System.out.println(GREEN + "\nSuccessfully registered!" + RESET);
 
-                //Update user instance
-                user.setUserName(userNameInput);
-                user.setPassword(passwordInput);
-
-                // add newuser to the database
-                DatabaseHandler.addNewUser(userNameInput, passwordInput);
+                UserAccountServices register = new UserAccountServices();
+                register.Register(user, userNameInput, passwordInput);
 
                 // Go to main menu
                 normalMainMenu(user, scanner);
@@ -119,6 +115,7 @@ public class Driver {
             userInput = scanner.nextLine();
 
             String userNameInput = "";
+            String passwordInput = "";
             if (userInput.equalsIgnoreCase("u")) {
                 System.out.print("  Enter username: ");
                 userNameInput = scanner.nextLine();
@@ -127,7 +124,7 @@ public class Driver {
             } else if (userInput.equalsIgnoreCase("p")) {
                 if (userNameExists) {
                     System.out.print("  Enter password: ");
-                    String passwordInput = scanner.nextLine();
+                    passwordInput = scanner.nextLine();
                     passwordMatches = DatabaseHandler.passwordMatching(userNameInput, passwordInput);
                 } else {
                     System.out.println(RED + "  Please provide the username first in Login Menu" + RESET);
@@ -142,6 +139,8 @@ public class Driver {
             if (userNameExists && passwordMatches) {
                 System.out.println(GREEN + "\nSuccessfully logged in!" + RESET);
                 // Use the method to make an instance of User
+                UserAccountServices loginService = new UserAccountServices();
+                loginService.login(user,userNameInput, passwordInput);
                 if (DatabaseHandler.isAdminUser(userNameInput)){
                     adminMainMenu(user, scanner);
                 } else {
@@ -167,14 +166,12 @@ public class Driver {
 
             if (userInput.equalsIgnoreCase("a")){
                 //Add articles menu
-                return;
+                AdminUser.addArticlesMenu(user,scanner);
             } else if (userInput.equalsIgnoreCase("l")) {
-                // Setting attributes to null for the user instance
-                user.setUserName(null);
-                user.setPassword(null);
+                UserAccountServices logoutService = new UserAccountServices();
+                logoutService.logout(user);
 
                 initialMenu(user, scanner);
-                return;
             } else if (userInput.equalsIgnoreCase("q")) {
                 System.exit(0);
             } else {
@@ -198,19 +195,19 @@ public class Driver {
             userInput = scanner.nextLine();
 
             if (userInput.equalsIgnoreCase("a")){
+                // Directed to ArticleManager class for further UI parts
                 ArticleManager.displayArticlesMenu(user, scanner);
-                // Do the remaining UI part
-                return;
+
             } else if (userInput.equalsIgnoreCase("r")) {
-                // Go to view recommended articles menu
-                return;
+                //
+
             } else if (userInput.equalsIgnoreCase("l")) {
                 // Setting attributes to null for the user instance
-                user.setUserName(null);
-                user.setPassword(null);
+                UserAccountServices logoutService = new UserAccountServices();
+                logoutService.logout(user);
 
                 initialMenu(user, scanner);
-                return;
+
             } else if (userInput.equalsIgnoreCase("q")) {
                 System.exit(0);
             } else {

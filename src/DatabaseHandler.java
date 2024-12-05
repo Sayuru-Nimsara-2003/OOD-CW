@@ -1,4 +1,9 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 public class DatabaseHandler {
@@ -54,7 +59,6 @@ public class DatabaseHandler {
                 "content TEXT NOT NULL," +
                 "category TEXT NOT NULL," +
                 "articleLink TEXT NOT NULL," +
-                "publishDate DATE NOT NULL" +
                 ");";
 
         String createScoresTable = "CREATE TABLE IF NOT EXISTS Scores (" +
@@ -121,16 +125,18 @@ public class DatabaseHandler {
     }
 
     // For register method --- userAccountServices class
-    public static void addNewUser(String userName, String password){
+    public static void addNewUser(User user, String userName, String password) {
         int userId = assignUserID();
-        String insertUser = "INSERT INTO User (userID, userName, password, isPremium) VALUES (?, ?, ?, ?);";
+        user.setUserId(userId);
+
+        String insertUser = "INSERT INTO User (userID, userName, password, isAdmin) VALUES (?, ?, ?, ?);";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(insertUser)) {
 
             pstmt.setInt(1, userId);        // Auto-assigned userID
-            pstmt.setString(2, userName);  // Provided userName
-            pstmt.setString(3, password);  // Provided password
-            pstmt.setInt(4, 0);            // Default isPremium value
+            pstmt.setString(2, userName);   // Provided userName
+            pstmt.setString(3, password);   // Provided password
+            pstmt.setInt(4, 0);             // isAdmin is always 0 (no admin rights)
 
             pstmt.executeUpdate();
             System.out.println("New user added successfully with userID: " + userId);
@@ -139,6 +145,7 @@ public class DatabaseHandler {
             System.out.println("Error adding user: " + e.getMessage());
         }
     }
+
 
 
     // For login method --- userAccountServices class
@@ -189,66 +196,6 @@ public class DatabaseHandler {
     }
 
 
-
-    // For deleteAccount method --- userAccountServices class
-    public static void logOutUser(String userName) {
-        // Query to find userID based on userName
-        String findUserIDQuery = "SELECT userID FROM User WHERE userName = ?;";
-
-        // Queries to delete user and related entries
-        String deleteUserQuery = "DELETE FROM User WHERE userID = ?;";
-        String deleteUserActionsQuery = "DELETE FROM UserActions WHERE userID = ?;";
-        String deleteScoresQuery = "DELETE FROM Scores WHERE userID = ?;";
-
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement findUserIDStmt = conn.prepareStatement(findUserIDQuery)) {
-
-            // Find the userID based on userName
-            findUserIDStmt.setString(1, userName);
-            ResultSet rs = findUserIDStmt.executeQuery();
-
-            if (rs.next()) {
-                String userID = rs.getString("userID");
-
-                // Delete entries in a transaction to maintain data integrity
-                conn.setAutoCommit(false);
-
-                try (PreparedStatement deleteUserActionsStmt = conn.prepareStatement(deleteUserActionsQuery);
-                     PreparedStatement deleteScoresStmt = conn.prepareStatement(deleteScoresQuery);
-                     PreparedStatement deleteUserStmt = conn.prepareStatement(deleteUserQuery)) {
-
-                    // Delete entries from UserActions
-                    deleteUserActionsStmt.setString(1, userID);
-                    deleteUserActionsStmt.executeUpdate();
-
-                    // Delete entries from Scores
-                    deleteScoresStmt.setString(1, userID);
-                    deleteScoresStmt.executeUpdate();
-
-                    // Delete the user from User table
-                    deleteUserStmt.setString(1, userID);
-                    deleteUserStmt.executeUpdate();
-
-                    // Commit the transaction
-                    conn.commit();
-                    System.out.println("User and related entries removed successfully.");
-
-                } catch (SQLException e) {
-                    // Rollback if any operation fails
-                    conn.rollback();
-                    System.out.println("Error removing user: " + e.getMessage());
-                } finally {
-                    // Restore auto-commit mode
-                    conn.setAutoCommit(true);
-                }
-            } else {
-                System.out.println("User not found with the provided userName.");
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error removing user: " + e.getMessage());
-        }
-    }
 
     public static int assignArticleID(){
         String query = "SELECT MAX(ArticleID) FROM Article;";
@@ -303,52 +250,26 @@ public class DatabaseHandler {
     }
 
     // For viewArticles method in UserActions class
-    public static void addViewUserAction(String userName, String title) {
-        // Query to get userID based on userName
-        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
-
-        // Query to get articleID based on title
-        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
-
+    public static void addViewUserAction(int userID, int articleID) {
         // Query to insert into UserActions
-        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'view')";
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'view', ?)";
+
+        // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         try (Connection conn = DriverManager.getConnection(URL)) {
             conn.setAutoCommit(false); // Enable transaction management
-
-            // Retrieve userID
-            int userID = -1;
-            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
-                pstmtUser.setString(1, userName);
-                ResultSet rsUser = pstmtUser.executeQuery();
-                if (rsUser.next()) {
-                    userID = rsUser.getInt("userID");
-                } else {
-                    System.out.println("User not found: " + userName);
-                    return;
-                }
-            }
-
-            // Retrieve articleID
-            int articleID = -1;
-            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
-                pstmtArticle.setString(1, title);
-                ResultSet rsArticle = pstmtArticle.executeQuery();
-                if (rsArticle.next()) {
-                    articleID = rsArticle.getInt("articleID");
-                } else {
-                    System.out.println("Article not found: " + title);
-                    return;
-                }
-            }
 
             // Insert into UserActions
             try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
                 pstmtInsert.setInt(1, userID);
                 pstmtInsert.setInt(2, articleID);
+                pstmtInsert.setString(3, timestamp);
+
                 int rowsInserted = pstmtInsert.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("View action added successfully for user: " + userName);
+                    System.out.println("View action added successfully for user: " + userID);
                 } else {
                     System.out.println("Failed to add view action.");
                 }
@@ -357,56 +278,32 @@ public class DatabaseHandler {
             conn.commit(); // Commit transaction
         } catch (SQLException e) {
             System.out.println("Error adding view action: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+
     // For likeArticle method -- UserActions class
-    public static void addLikeUserAction(String userName, String title) {
-        // Query to get userID based on userName
-        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
-
-        // Query to get articleID based on title
-        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
-
+    public static void addLikeUserAction(int userID, int articleID) {
         // Query to insert into UserActions
-        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'like')";
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'like', ?)";
+
+        // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         try (Connection conn = DriverManager.getConnection(URL)) {
             conn.setAutoCommit(false); // Enable transaction management
-
-            // Retrieve userID
-            int userID = -1;
-            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
-                pstmtUser.setString(1, userName);
-                ResultSet rsUser = pstmtUser.executeQuery();
-                if (rsUser.next()) {
-                    userID = rsUser.getInt("userID");
-                } else {
-                    System.out.println("User not found: " + userName);
-                    return;
-                }
-            }
-
-            // Retrieve articleID
-            int articleID = -1;
-            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
-                pstmtArticle.setString(1, title);
-                ResultSet rsArticle = pstmtArticle.executeQuery();
-                if (rsArticle.next()) {
-                    articleID = rsArticle.getInt("articleID");
-                } else {
-                    System.out.println("Article not found: " + title);
-                    return;
-                }
-            }
 
             // Insert into UserActions
             try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
                 pstmtInsert.setInt(1, userID);
                 pstmtInsert.setInt(2, articleID);
+                pstmtInsert.setString(3, timestamp);
+
                 int rowsInserted = pstmtInsert.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("Like action added successfully for user: " + userName);
+                    System.out.println("Like action added successfully for user ID: " + userID);
                 } else {
                     System.out.println("Failed to add like action.");
                 }
@@ -415,57 +312,33 @@ public class DatabaseHandler {
             conn.commit(); // Commit transaction
         } catch (SQLException e) {
             System.out.println("Error adding like action: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
 
+
     // For dislikeArticle method -- UserActions class
-    public static void addDislikeUserAction(String userName, String title) {
-        // Query to get userID based on userName
-        String getUserIDQuery = "SELECT userID FROM User WHERE userName = ?";
-
-        // Query to get articleID based on title
-        String getArticleIDQuery = "SELECT articleID FROM Articles WHERE title = ?";
-
+    public static void addDislikeUserAction(int userID, int articleID) {
         // Query to insert into UserActions
-        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action) VALUES (?, ?, 'dislike')";
+        String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'dislike', ?)";
+
+        // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
+        String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         try (Connection conn = DriverManager.getConnection(URL)) {
             conn.setAutoCommit(false); // Enable transaction management
-
-            // Retrieve userID
-            int userID = -1;
-            try (PreparedStatement pstmtUser = conn.prepareStatement(getUserIDQuery)) {
-                pstmtUser.setString(1, userName);
-                ResultSet rsUser = pstmtUser.executeQuery();
-                if (rsUser.next()) {
-                    userID = rsUser.getInt("userID");
-                } else {
-                    System.out.println("User not found: " + userName);
-                    return;
-                }
-            }
-
-            // Retrieve articleID
-            int articleID = -1;
-            try (PreparedStatement pstmtArticle = conn.prepareStatement(getArticleIDQuery)) {
-                pstmtArticle.setString(1, title);
-                ResultSet rsArticle = pstmtArticle.executeQuery();
-                if (rsArticle.next()) {
-                    articleID = rsArticle.getInt("articleID");
-                } else {
-                    System.out.println("Article not found: " + title);
-                    return;
-                }
-            }
 
             // Insert into UserActions
             try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
                 pstmtInsert.setInt(1, userID);
                 pstmtInsert.setInt(2, articleID);
+                pstmtInsert.setString(3, timestamp);
+
                 int rowsInserted = pstmtInsert.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("Dislike action added successfully for user: " + userName);
+                    System.out.println("Dislike action added successfully for user ID: " + userID);
                 } else {
                     System.out.println("Failed to add dislike action.");
                 }
@@ -474,9 +347,10 @@ public class DatabaseHandler {
             conn.commit(); // Commit transaction
         } catch (SQLException e) {
             System.out.println("Error adding dislike action: " + e.getMessage());
+            e.printStackTrace();
         }
-
     }
+
 
 
     // Create a array list of all existing articles (Only when the program starts)
@@ -520,6 +394,88 @@ public class DatabaseHandler {
             System.out.println("Error accessing the database: " + e.getMessage());
         }
 
+    }
+
+
+    // Add an article -- ArticleManager class
+    public static void addNewArticle(String title, String content, String category, String link) {
+        int articleID = assignArticleID();
+        Article newArticle = new Article(articleID, title, content, category, link);
+        ArticleManager.allArticles.add(newArticle);
+
+        // SQL query to insert the new article
+        String insertArticleSQL = "INSERT INTO Articles (articleID, title, content, category, articleLink) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(insertArticleSQL)) {
+
+            // Set the parameters for the insert statement
+            pstmt.setInt(1, articleID);
+            pstmt.setString(2, title);
+            pstmt.setString(3, content);
+            pstmt.setString(4, category);
+            pstmt.setString(5, link);
+
+            // Execute the insert
+            int rowsInserted = pstmt.executeUpdate();
+            if (rowsInserted > 0) {
+                System.out.println("Article added successfully with ID: " + articleID);
+            } else {
+                System.out.println("Failed to add article.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error while adding article: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // BELOW METHODS ARE ONLY USED FOR ADDING DATA INITIALLY TO THE DATABASE
+
+    // Populate Users table
+    public static void addUsersFromCSV(String filePath) {
+        String insertUserSQL = "INSERT INTO User (userID, userName, password, isAdmin) VALUES (?, ?, ?, ?);";
+
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(insertUserSQL);
+             BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            boolean isFirstLine = true;
+
+            while ((line = br.readLine()) != null) {
+                if (isFirstLine) { // Skip the header line
+                    isFirstLine = false;
+                    continue;
+                }
+
+                String[] values = line.split(","); // Split CSV line by commas
+                int userID = Integer.parseInt(values[0]);
+                String userName = values[1];
+                String password = values[2];
+                int isAdmin = Integer.parseInt(values[3]);
+
+                // Set values in the PreparedStatement
+                pstmt.setInt(1, userID);
+                pstmt.setString(2, userName);
+                pstmt.setString(3, password);
+                pstmt.setInt(4, isAdmin);
+
+                pstmt.addBatch(); // Add to batch for efficiency
+            }
+
+            pstmt.executeBatch(); // Execute all batched queries
+            System.out.println("Users added successfully from CSV.");
+
+        } catch (IOException e) {
+            System.out.println("Error reading CSV file: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Error inserting users into database: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        String filePath = "Data/UserTable data.csv"; // Path to your CSV file
+        addUsersFromCSV(filePath);
     }
 
 

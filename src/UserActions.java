@@ -5,20 +5,16 @@ public class UserActions {
         this.user = user;
     }
 
-    public void viewArticle(User user, String articleTitle){
-        // View the article in a window
-        DatabaseHandler.addViewUserAction(user.getUserName(), articleTitle);
+    public void viewArticle(int userID, int articleID){
+        DatabaseHandler.addViewUserAction(userID, articleID);
     }
 
-    public void likeArticle(User user, String articleTitle){
-        DatabaseHandler.addLikeUserAction(user.getUserName(), articleTitle);
+    public void likeArticle(int userID, int articleID){
+        DatabaseHandler.addLikeUserAction(userID, articleID);
     }
 
-    public void dislikeArticle(User user, String articleTitle){
-        DatabaseHandler.addDislikeUserAction(user.getUserName(), articleTitle);
+    public void dislikeArticle(int userID, int articleID){
+        DatabaseHandler.addDislikeUserAction(userID, articleID);
     }
 
-    public void saveArticle(){
-        // get a relative path and copy the file in that path to another given path
-    }
 }

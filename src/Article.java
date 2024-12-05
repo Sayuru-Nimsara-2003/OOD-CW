@@ -1,3 +1,6 @@
+import java.awt.*;
+import java.net.URI;
+
 public class Article {
     private int articleID;
     private String title;
@@ -27,6 +30,27 @@ public class Article {
     public String getLink(){return link;}
     public String getCategory(){return category;}
 
+    public void displayArticle(){
+        String url = this.getLink();
+        try {
+            // Check if the desktop environment is supported
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
 
+                // Check if the browse action is supported
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    // Open the URL
+                    desktop.browse(new URI(url));
+                    System.out.println("Web link opened successfully!");
+                } else {
+                    System.out.println("BROWSE action is not supported on this system.");
+                }
+            } else {
+                System.out.println("Desktop is not supported on this system.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error opening web link: " + e.getMessage());
+        }
+    }
 
 }
