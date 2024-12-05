@@ -49,26 +49,27 @@ public class ArticleManager {
         }
     }
 
-    public static ArrayList<Integer> displayArticlesByCategory(String category){
-        int instanceIndex = 0;
-        int count = 0;
-        ArrayList<Integer> instanceIndexList = new ArrayList<Integer>();
-        for (Article article : allArticles){
-            if (article.getCategory().equals(category)){
-                System.out.println("\t" + count + ")" + article.getTitle());
-                instanceIndexList.add(instanceIndex);
-                count++;
+    public static ArrayList<Integer> displayArticlesByCategory(String category) {
+        ArrayList<Integer> instanceIndexList = new ArrayList<>();
+        int count = 0; // Counter for display numbering
+
+        // Iterate through allArticles with an index
+        for (int i = 0; i < allArticles.size(); i++) {
+            Article article = allArticles.get(i);
+            if (article.getCategory().equals(category)) {
+                System.out.println("\t" + ++count + ") " + article.getTitle());
+                instanceIndexList.add(i);
             }
-            instanceIndex++;
         }
         return instanceIndexList;
     }
+
 
     public static void articlesMenu(String category, User user, Scanner scanner){
         String userInput = "";
 
         while (true){
-            System.out.println(BLUE + "Enter the article number below input field");
+            System.out.println(BLUE + "Enter the article number below input field" + RESET);
             System.out.println();
             ArrayList<Integer> articleInstanceIndexes = displayArticlesByCategory(category);
             System.out.println();
@@ -77,7 +78,7 @@ public class ArticleManager {
             userInput = scanner.nextLine();
 
             if (userInput.matches("\\d+") && Integer.parseInt(userInput) <= articleInstanceIndexes.size()){
-                int articleInstanceIndex = Integer.parseInt(userInput);
+                int articleInstanceIndex = articleInstanceIndexes.get(Integer.parseInt(userInput) - 1);
                 // Direct to articleActions menu with object index
                 articleActions(articleInstanceIndex, category, user, scanner);
             } else if (userInput.equalsIgnoreCase("b")) {
@@ -113,7 +114,7 @@ public class ArticleManager {
                     System.out.println("Press L to like");
                     System.out.println("Press D to dislike");
                     System.out.println("Press B to go back to article list");
-                    System.out.println(BLUE + "  Enter your input : " + RESET);
+                    System.out.print(BLUE + "  Enter your input : " + RESET);
                     userInput2 = scanner.nextLine();
 
                     if (userInput2.equalsIgnoreCase("l")){

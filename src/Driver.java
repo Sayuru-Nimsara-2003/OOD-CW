@@ -26,7 +26,7 @@ public class Driver {
     }
 
     public static void initialMenu(User user, Scanner scanner){
-        System.out.println("Hello, Welcome to articleViewer"); // Change text color and size if possible
+        System.out.println("Hello, Welcome to articleReader"); // Change text color and size if possible
         System.out.println("---------------------------------------");
 
         boolean validInput = false;
@@ -56,7 +56,8 @@ public class Driver {
     public static void initialRegisterMenu(User user, Scanner scanner) {
         boolean userNameOK = false;
         boolean passwordOK = false;
-        String userInput;
+        String userNameInput = "";
+        String passwordInput = "";
 
         while (true) {
             System.out.println(BLUE + "\nRegister Menu:" + RESET);
@@ -64,30 +65,48 @@ public class Driver {
             System.out.println("  To enter password, enter P");
             System.out.println("  To go back to the previous menu, press B");
             System.out.print(BLUE + "\tEnter your input: " + RESET);
-            userInput = scanner.nextLine();
-
-            String userNameInput = "";
-            String passwordInput = "";
+            String userInput = scanner.nextLine().trim();
 
             if (userInput.equalsIgnoreCase("u")) {
                 System.out.print("  Enter username: ");
-                userNameInput = scanner.nextLine();
-                userNameOK = UserAccountServices.userNameValidation(userNameInput);
+                userNameInput = scanner.nextLine().trim();
+
+                // Check if the username exists and is valid
+                if (DatabaseHandler.doesUserNameExist(userNameInput)) {
+                    System.out.println(RED + "User already exists" + RESET);
+                    userNameOK = false;
+                } else if (UserAccountServices.userNameValidation(userNameInput)) {
+                    userNameOK = true;
+                    System.out.println(GREEN + "  Username accepted." + RESET);
+                } else {
+                    System.out.println(RED + "  Invalid username. Please try again." + RESET);
+                }
+
             } else if (userInput.equalsIgnoreCase("p")) {
                 if (userNameOK) {
                     System.out.print("  Enter password: ");
-                    passwordInput = scanner.nextLine();
-                    passwordOK = UserAccountServices.PasswordValidation(passwordInput);
+                    passwordInput = scanner.nextLine().trim();
+
+                    if (UserAccountServices.PasswordValidation(passwordInput)) {
+                        passwordOK = true;
+                        System.out.println(GREEN + "  Password accepted." + RESET);
+                    } else {
+                        System.out.println(RED + "  Invalid password. Please try again." + RESET);
+                    }
                 } else {
-                    System.out.println(RED + "  Please provide a valid username first in Register Menu" + RESET);
+                    System.out.println(RED + "  Please provide a valid username first in Register Menu." + RESET);
                 }
+
             } else if (userInput.equalsIgnoreCase("b")) {
+                // Return to the initial menu
                 initialMenu(user, scanner);
                 return;
+
             } else {
                 System.out.println(RED + "  Invalid input. Please try again." + RESET);
             }
 
+            // If both validations pass, register the user
             if (userNameOK && passwordOK) {
                 System.out.println(GREEN + "\nSuccessfully registered!" + RESET);
 
@@ -101,10 +120,13 @@ public class Driver {
         }
     }
 
+
     public static void initialLoginMenu(User user, Scanner scanner){
         boolean userNameExists = false;
         boolean passwordMatches = false;
-        String userInput;
+        String userInput = "";
+        String userNameInput = "";
+        String passwordInput = "";
 
         while (true) {
             System.out.println(BLUE + "\nLogin Menu:" + RESET);
@@ -114,12 +136,14 @@ public class Driver {
             System.out.print(BLUE + "\tEnter your input: " + RESET);
             userInput = scanner.nextLine();
 
-            String userNameInput = "";
-            String passwordInput = "";
+
             if (userInput.equalsIgnoreCase("u")) {
                 System.out.print("  Enter username: ");
                 userNameInput = scanner.nextLine();
                 userNameExists = DatabaseHandler.doesUserNameExist(userNameInput);
+                if (!userNameExists){
+                    System.out.println(RED + "  Username doesn't exist" + RESET);
+                }
 
             } else if (userInput.equalsIgnoreCase("p")) {
                 if (userNameExists) {
@@ -131,22 +155,25 @@ public class Driver {
                 }
             } else if (userInput.equalsIgnoreCase("b")) {
                 initialMenu(user, scanner);
-                return;
             } else {
                 System.out.println(RED + "  Invalid input. Please try again." + RESET);
             }
 
+            if (userNameExists && passwordInput != ""){
+                if (userNameExists && !passwordMatches){
+                    System.out.println(RED + "Password doesn't match with username" + RESET);
+                }
+            }
+
             if (userNameExists && passwordMatches) {
-                System.out.println(GREEN + "\nSuccessfully logged in!" + RESET);
-                // Use the method to make an instance of User
                 UserAccountServices loginService = new UserAccountServices();
                 loginService.login(user,userNameInput, passwordInput);
+                System.out.println(GREEN + "Successfully logged in with user ID of!" + user.getUserId() + "\n" + RESET);
                 if (DatabaseHandler.isAdminUser(userNameInput)){
                     adminMainMenu(user, scanner);
                 } else {
                     normalMainMenu(user, scanner);
                 }
-                return;
             }
         }
 
@@ -183,6 +210,7 @@ public class Driver {
 
     // Main menu for normal users
     public static void normalMainMenu(User user, Scanner scanner){
+        DatabaseHandler.generateUserActionsCSV("Data/ActionScores.csv");
         String userInput;
 
         while (true) {
@@ -191,7 +219,7 @@ public class Driver {
             System.out.println(" To get recommendations enter R");
             System.out.println(" To logout enter L");
             System.out.println(" To quit application press Q ");
-            System.out.println(BLUE + "\tEnter your input: " + BLUE);
+            System.out.print(BLUE + "\tEnter your input: " + RESET);
             userInput = scanner.nextLine();
 
             if (userInput.equalsIgnoreCase("a")){
@@ -199,7 +227,8 @@ public class Driver {
                 ArticleManager.displayArticlesMenu(user, scanner);
 
             } else if (userInput.equalsIgnoreCase("r")) {
-                //
+                //Directed to recommendations menu
+                RecommendationEngine.recommendationMenu(user,scanner);
 
             } else if (userInput.equalsIgnoreCase("l")) {
                 // Setting attributes to null for the user instance

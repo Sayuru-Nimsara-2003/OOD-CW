@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 
@@ -25,14 +26,11 @@ public class RecommendationEngine {
 
         try {
             // File path to the CSV
-            File file = new File("src/data.csv");  // Adjust path if necessary
+            File file = new File("Data/ActionScores.csv");  // Adjust path if necessary
 
             // Create the FileDataModel and load the data
             FileDataModel model = new FileDataModel(file);
 
-            // Ensure the CSV does not include headers or that they're ignored by the model
-            System.out.println("Total number of users in the dataset: " + model.getNumUsers());
-            System.out.println("Total number of items in the dataset: " + model.getNumItems());
 
             // Compute similarity between users using Pearson Correlation (common similarity measure)
             UserSimilarity similarity = new EuclideanDistanceSimilarity(model);
@@ -66,31 +64,45 @@ public class RecommendationEngine {
 
     // Recommendations menu
     public static void recommendationMenu(User user, Scanner scanner){
-        System.out.println(BLUE + "Recommendations for - " + user.getUserName() + RESET);
-        System.out.println();
-        System.out.println(BLUE + "Note - Select article number and enter in the input field" + RESET);
-        ArrayList<Integer> recommendations = recommendArticles(user);
-        int index = 0;
-        for (int articleID : recommendations){
-            Article relevantArticle = ArticleManager.allArticles.get(articleID - 1);
-            index++;
-            System.out.println("  " + index + ") " + relevantArticle.getTitle());
+        System.out.println(BLUE + "\nRecommendations for - " + user.getUserName() + RESET);
+        System.out.println(BLUE + "Note - Select article number and enter in the input field\n" + RESET);
+        ArrayList<Integer> recommendations = null;
+
+        try {
+            // Attempt to get recommendations
+            recommendations = recommendArticles(user);
+
+            // Check if there are no recommendations
+            if (recommendations == null || recommendations.isEmpty()) {
+                throw new Exception("No recommendations available.");
+            }
+
+            // Display the recommendations if available
+            for (int i = 0; i < recommendations.size() ; i++){
+                System.out.println((i+1) + ") " + ArticleManager.allArticles.get(recommendations.get(i)).getTitle());
+            }
+        } catch (Exception e) {
+            // Handle the case where there are no recommendations or an error occurs
+            System.out.println(RED + "No Recommendations due to insufficient user activity" + RESET);
         }
+
         System.out.println();
-        System.out.println("To go back press B");
-        System.out.print(BLUE + "Enter your input: " + RESET);
         String userInput = "";
 
         while (true) {
-            if (userInput.matches("\\d+") && Integer.parseInt(userInput) <= 10) {
+            System.out.println("To go back press B");
+            System.out.print(BLUE + "Enter your input: " + RESET);
+            userInput = scanner.nextLine();
+
+            if (userInput.matches("\\d+") && Integer.parseInt(userInput) <= Objects.requireNonNull(recommendations).size()) {
                 // Direct to articleActions menu
-                articleActions(Integer.parseInt(userInput), user, scanner);
+                int selectIndex = recommendations.get((Integer.parseInt(userInput) - 1));
+                articleActions(selectIndex, user, scanner);
             } else if (userInput.equalsIgnoreCase("b")) {
                 Driver.normalMainMenu(user, scanner);
             } else {
                 System.out.println(RED + "Invalid user input. Try again!" + RESET);
-                System.out.print(BLUE + "Enter your input: " + RESET);
-                userInput = "";
+
             }
         }
     }
@@ -149,5 +161,7 @@ public class RecommendationEngine {
         }
 
     }
+
+
 }
 

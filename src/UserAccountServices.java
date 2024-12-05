@@ -37,7 +37,6 @@ public class UserAccountServices implements UserAccountManager{
             System.out.println(RED + "First letter should be an alphabetic character" + RESET);
             return false;
         }
-        System.out.println(GREEN + "User Name entered successfully" + RESET);
         return true;
     }
 
@@ -46,6 +45,7 @@ public class UserAccountServices implements UserAccountManager{
     public void login(User user, String userName, String password) {
         user.setUserName(userName);
         user.setPassword(password);
+        user.setUserId(DatabaseHandler.getUserIdByUserName(userName));
     }
 
     @Override

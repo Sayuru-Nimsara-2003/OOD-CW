@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -7,6 +8,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 public class DatabaseHandler {
+    public static final String RESET = "\u001B[0m"; // Reset to default color
+    public static final String RED = "\u001B[31m";  // Red text
+    public static final String GREEN = "\u001B[32m"; // Green text
+    public static final String BLUE = "\u001B[34m"; // Blue text
     private static final String URL = "jdbc:sqlite:news_recommendation_system.db";
 
     // Method to create a database connection
@@ -14,7 +19,6 @@ public class DatabaseHandler {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(URL);
-            System.out.println("Connection to SQLite has been established.");
         } catch (SQLException e) {
             System.out.println("Error occurred while connecting to the database.");
             e.printStackTrace();
@@ -40,8 +44,9 @@ public class DatabaseHandler {
                 "userID INTEGER PRIMARY KEY," +
                 "userName TEXT NOT NULL," +
                 "password TEXT NOT NULL," +
-                "isAdmin INTEGER NOT NULL" +
+                "isAdmin INTEGER NOT NULL DEFAULT 0" +  // Make sure isAdmin is included
                 ");";
+
 
         String createUserActionsTable = "CREATE TABLE IF NOT EXISTS UserActions (" +
                 "userID INTEGER NOT NULL," +
@@ -58,23 +63,15 @@ public class DatabaseHandler {
                 "title TEXT NOT NULL," +
                 "content TEXT NOT NULL," +
                 "category TEXT NOT NULL," +
-                "articleLink TEXT NOT NULL," +
+                "articleLink TEXT NOT NULL" +
                 ");";
 
-        String createScoresTable = "CREATE TABLE IF NOT EXISTS Scores (" +
-                "userID INTEGER NOT NULL," +
-                "category TEXT NOT NULL," +
-                "score INTEGER DEFAULT 0," +
-                "PRIMARY KEY (userID, category)," +
-                "FOREIGN KEY(userID) REFERENCES User(userID)" +
-                ");";
 
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
             stmt.execute(createUserTable);
             stmt.execute(createUserActionsTable);
             stmt.execute(createArticlesTable);
-            stmt.execute(createScoresTable);
             System.out.println("Tables created successfully.");
         } catch (SQLException e) {
             System.out.println("Error creating tables: " + e.getMessage());
@@ -139,14 +136,41 @@ public class DatabaseHandler {
             pstmt.setInt(4, 0);             // isAdmin is always 0 (no admin rights)
 
             pstmt.executeUpdate();
-            System.out.println("New user added successfully with userID: " + userId);
+            System.out.println(GREEN + "New user added successfully with userID: " + userId + "\n" + RESET);
 
         } catch (SQLException e) {
             System.out.println("Error adding user: " + e.getMessage());
         }
     }
 
+    // Method to get userID by userName
+    public static int getUserIdByUserName(String userName) {
+        int userId = -1;  // Default value to return if user is not found
 
+        // SQL query to get the userID from the User table based on the userName
+        String query = "SELECT userID FROM User WHERE userName = ?";
+
+        // Establish the connection and execute the query
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            // Set the userName parameter in the query
+            pstmt.setString(1, userName);
+
+            // Execute the query and retrieve the result
+            ResultSet rs = pstmt.executeQuery();
+
+            // If a result is found, retrieve the userID
+            if (rs.next()) {
+                userId = rs.getInt("userID");  // Get userID from result set
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving user ID: " + e.getMessage());
+        }
+
+        return userId;  // Return the userID (or -1 if not found)
+    }
 
     // For login method --- userAccountServices class
     public static boolean passwordMatching(String userName, String password) {
@@ -195,10 +219,47 @@ public class DatabaseHandler {
         return false; // Return false if userName not found or error occurs
     }
 
+    // Method to check if an article exists by title
+    public static boolean doesArticleExist(String title) {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Establish a database connection
+            connection = connect();
+
+            // SQL query to check if an article with the given title exists
+            String query = "SELECT articleID FROM Articles WHERE title = ?";
+
+            // Prepare the statement
+            statement = connection.prepareStatement(query);
+            statement.setString(1, title);
+
+            // Execute the query
+            resultSet = statement.executeQuery();
+
+            // If resultSet has data, the article exists
+            return resultSet.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // In case of an error, return false
+        } finally {
+            // Close resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (statement != null) statement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 
     public static int assignArticleID(){
-        String query = "SELECT MAX(ArticleID) FROM Article;";
+        String query = "SELECT MAX(ArticleID) FROM Articles;";
         int newArticleID = 1; // Default starting userID
 
         try (Connection conn = DriverManager.getConnection(URL);
@@ -388,7 +449,6 @@ public class DatabaseHandler {
             // Set the retrieved articles in the ArticleManager
             ArticleManager.allArticles = articles;
 
-            System.out.println("Articles retrieved successfully and stored in ArticleManager.");
 
         } catch (SQLException e) {
             System.out.println("Error accessing the database: " + e.getMessage());
@@ -473,9 +533,162 @@ public class DatabaseHandler {
         }
     }
 
+    // Method to check the schema of the User table
+    public static void checkTableSchema() {
+        String query = "PRAGMA table_info(User);";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:news_recommendation_system.db"); // Use your actual database path
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            // Print the column names and types
+            System.out.println("Column info for 'User' table:");
+            while (rs.next()) {
+                int columnID = rs.getInt("cid");
+                String columnName = rs.getString("name");
+                String columnType = rs.getString("type");
+                boolean isNotNull = rs.getInt("notnull") == 1;
+                String defaultValue = rs.getString("dflt_value");
+                boolean isPrimaryKey = rs.getInt("pk") == 1;
+
+                System.out.println("Column ID: " + columnID);
+                System.out.println("Column Name: " + columnName);
+                System.out.println("Column Type: " + columnType);
+                System.out.println("Is Not Null: " + isNotNull);
+                System.out.println("Default Value: " + defaultValue);
+                System.out.println("Is Primary Key: " + isPrimaryKey);
+                System.out.println("-------------------------------");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error checking table schema: " + e.getMessage());
+        }
+    }
+
+    // Method to drop all tables in the database
+    public static void dropAllTables() {
+        String query = "SELECT name FROM sqlite_master WHERE type='table';";
+
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            // Loop through all tables and drop them
+            while (rs.next()) {
+                String tableName = rs.getString("name");
+
+                // Skip the sqlite_master table itself
+                if ("sqlite_master".equals(tableName)) {
+                    continue;
+                }
+
+                String dropTableSQL = "DROP TABLE IF EXISTS " + tableName;
+                try (Statement dropStmt = conn.createStatement()) {
+                    dropStmt.executeUpdate(dropTableSQL);
+                    System.out.println("Dropped table: " + tableName);
+                } catch (SQLException e) {
+                    System.out.println("Error dropping table " + tableName + ": " + e.getMessage());
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error fetching table names: " + e.getMessage());
+        }
+    }
+
+    // Method to populate the UserActions table from a CSV file
+    public static void addUserActionsFromCSV(String filePath) {
+        String insertUserActionSQL = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, ?, ?);";
+
+        try (Connection conn = DriverManager.getConnection(URL); // Replace with your actual URL
+             PreparedStatement pstmt = conn.prepareStatement(insertUserActionSQL);
+             BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            boolean isFirstLine = true;
+
+            while ((line = br.readLine()) != null) {
+                if (isFirstLine) { // Skip the header line
+                    isFirstLine = false;
+                    continue;
+                }
+
+                String[] values = line.split(","); // Split CSV line by commas
+                int userID = Integer.parseInt(values[0]);
+                int articleID = Integer.parseInt(values[1]);
+                String action = values[2];
+                String timestamp = values[3]; // Make sure timestamp is in the correct format
+
+                // Set values in the PreparedStatement
+                pstmt.setInt(1, userID);
+                pstmt.setInt(2, articleID);
+                pstmt.setString(3, action);
+                pstmt.setString(4, timestamp);
+
+                pstmt.addBatch(); // Add to batch for efficiency
+            }
+
+            pstmt.executeBatch(); // Execute all batched queries
+            System.out.println("User actions added successfully from CSV.");
+
+        } catch (IOException e) {
+            System.out.println("Error reading CSV file: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("Error inserting user actions into database: " + e.getMessage());
+        }
+    }
+
+    public static void generateUserActionsCSV(String filePath) {
+        // Database connection details
+        String url = "jdbc:sqlite:news_recommendation_system.db";
+        String query = "SELECT userID, articleID, action FROM UserActions";
+
+        // Prepare the CSV writer
+        try (FileWriter writer = new FileWriter(filePath);
+             Connection connection = DriverManager.getConnection(url);
+             Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            // Process each record from the ResultSet
+            while (rs.next()) {
+                int userID = rs.getInt("userID");
+                int articleID = rs.getInt("articleID");
+                String action = rs.getString("action");
+
+                // Determine the value based on the action
+                int actionValue = 0;
+                switch (action) {
+                    case "view":
+                        actionValue = 1;
+                        break;
+                    case "dislike":
+                        actionValue = -1;
+                        break;
+                    case "like":
+                        actionValue = 2;
+                        break;
+                    default:
+                        System.err.println("Unknown action type: " + action);
+                        continue; // Skip this row if the action is unknown
+                }
+
+                // Write the row in CSV format: userID, articleID, actionValue
+                writer.append(String.format("%d,%d,%d%n", userID, articleID, actionValue));
+            }
+
+//            System.out.println("CSV file has been generated successfully!");
+
+        } catch (SQLException e) {
+            System.err.println("Database error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("File error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        String filePath = "Data/UserTable data.csv"; // Path to your CSV file
-        addUsersFromCSV(filePath);
+        generateUserActionsCSV("Data/ActionScores.csv");
     }
 
 
