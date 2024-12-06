@@ -79,7 +79,7 @@ public class RecommendationEngine {
 
             // Display the recommendations if available
             for (int i = 0; i < recommendations.size() ; i++){
-                System.out.println((i+1) + ") " + ArticleManager.allArticles.get(recommendations.get(i)).getTitle());
+                System.out.println((i+1) + ") " + ArticleManager.allArticles.get(recommendations.get(i) - 1 ).getTitle());
             }
         } catch (Exception e) {
             // Handle the case where there are no recommendations or an error occurs

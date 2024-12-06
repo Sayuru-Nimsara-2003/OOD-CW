@@ -24,7 +24,7 @@ public class UserAccountServices implements UserAccountManager{
             System.out.println(RED + "Password must have at least one number" + RESET);
             return false;
         }
-        System.out.println(GREEN + "Password is entered successfully" + RESET);
+
         return true;
     }
 

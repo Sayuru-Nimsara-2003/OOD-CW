@@ -136,7 +136,7 @@ public class DatabaseHandler {
             pstmt.setInt(4, 0);             // isAdmin is always 0 (no admin rights)
 
             pstmt.executeUpdate();
-            System.out.println(GREEN + "New user added successfully with userID: " + userId + "\n" + RESET);
+
 
         } catch (SQLException e) {
             System.out.println("Error adding user: " + e.getMessage());
