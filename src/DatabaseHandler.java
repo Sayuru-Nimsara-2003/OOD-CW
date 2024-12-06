@@ -288,11 +288,7 @@ public class DatabaseHandler {
                 pstmtInsert.setString(3, timestamp);
 
                 int rowsInserted = pstmtInsert.executeUpdate();
-                if (rowsInserted > 0) {
-                    System.out.println("View action added successfully for user: " + userID);
-                } else {
-                    System.out.println("Failed to add view action.");
-                }
+
             }
 
             conn.commit();
@@ -322,7 +318,7 @@ public class DatabaseHandler {
 
                 int rowsInserted = pstmtInsert.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("Like action added successfully for user ID: " + userID);
+//                    System.out.println("Dislike action added successfully for user ID: " + userID);
                 } else {
                     System.out.println("Failed to add like action.");
                 }
@@ -356,7 +352,7 @@ public class DatabaseHandler {
 
                 int rowsInserted = pstmtInsert.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("Dislike action added successfully for user ID: " + userID);
+//                    System.out.println("Dislike action added successfully for user ID: " + userID);
                 } else {
                     System.out.println("Failed to add dislike action.");
                 }

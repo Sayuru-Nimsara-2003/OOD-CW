@@ -148,6 +148,7 @@ public class RecommendationEngine {
                             if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"dislike")){
                                 newAction.removeAction(user.getUserId(), article.getArticleID(),"dislike" );
                             }
+                            System.out.println(GREEN + "You have liked successfully" + RESET);
 
                         } else {
                             System.out.println(RED + "You have already liked before!" + RESET);
@@ -165,6 +166,7 @@ public class RecommendationEngine {
                             if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"like")){
                                 newAction.removeAction(user.getUserId(), article.getArticleID(),"like" );
                             }
+                            System.out.println(GREEN + "You have disliked successfully" + RESET);
 
                         } else {
                             System.out.println(RED + "You have already disliked before!");

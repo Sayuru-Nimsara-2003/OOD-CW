@@ -81,7 +81,7 @@ public class AdminUser extends User{
         }
 
         // Displaying the summary of the article
-        System.out.println(BLUE + "Summary of the article details" + RESET);
+        System.out.println(BLUE + "\nSummary of the article details" + RESET);
         System.out.println("\t title -- " + title);
         System.out.println("\t content --" + content);
         System.out.println("\t link --" + link);

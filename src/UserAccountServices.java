@@ -63,6 +63,7 @@ public class UserAccountServices implements UserAccountManager{
         user.setUserId(-1);
         user.setUserName(null);
         user.setPassword(null);
+        System.out.println(GREEN + "You logged out" + RESET);
     }
 
 

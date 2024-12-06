@@ -41,7 +41,7 @@ public class Article {
                 // Check if the browse action is supported
                 if (desktop.isSupported(Desktop.Action.BROWSE)) {
                     desktop.browse(new URI(url));
-                    System.out.println("Web link opened successfully!");
+                    System.out.println("\n");
                 } else {
                     System.out.println("BROWSE action is not supported on this system.");
                 }

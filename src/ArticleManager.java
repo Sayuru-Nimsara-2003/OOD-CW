@@ -68,7 +68,7 @@ public class ArticleManager {
         String userInput = "";
 
         while (true){
-            System.out.println(BLUE + "Enter the article number below input field" + RESET);
+            System.out.println(BLUE + "\nEnter the article number below input field" + RESET);
             System.out.println();
             ArrayList<Integer> articleInstanceIndexes = displayArticlesByCategory(category);
             System.out.println();
@@ -134,6 +134,7 @@ public class ArticleManager {
                             if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"dislike")){
                                 newAction.removeAction(user.getUserId(), article.getArticleID(),"dislike" );
                             }
+                            System.out.println(GREEN + "You have liked successfully" + RESET);
 
                         } else {
                             System.out.println(RED + "You have already liked before!" + RESET);
@@ -151,6 +152,7 @@ public class ArticleManager {
                             if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"like")){
                                 newAction.removeAction(user.getUserId(), article.getArticleID(),"like" );
                             }
+                            System.out.println(GREEN + "You have disliked successfully" + RESET);
 
                         } else {
                             System.out.println(RED + "You have already disliked before!");

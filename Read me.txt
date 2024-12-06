@@ -1,0 +1,5 @@
+1) To start the application run 'main' method in 'Driver' class
+2) To login as the admin in the admin menu use below credentials
+	* username = Admin001
+	* password = Password001
+

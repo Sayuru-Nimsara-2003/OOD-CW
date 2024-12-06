@@ -172,7 +172,7 @@ public class Driver {
             if (userNameExists && passwordMatches) {
                 UserAccountServices loginService = new UserAccountServices();
                 loginService.login(user,userNameInput, passwordInput);
-                System.out.println(GREEN + "Successfully logged in with user ID of!" + user.getUserId() + "\n" + RESET);
+                System.out.println(GREEN + "Successfully logged in" + RESET);
                 if (DatabaseHandler.isAdminUser(userNameInput)){
                     adminMainMenu(user, scanner);
                 } else {
