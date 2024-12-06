@@ -14,7 +14,7 @@ public class DatabaseHandler {
     public static final String BLUE = "\u001B[34m"; // Blue text
     private static final String URL = "jdbc:sqlite:news_recommendation_system.db";
 
-    // Method to create a database connection
+    // Create the database connection
     public static Connection connect() {
         Connection conn = null;
         try {
@@ -26,7 +26,7 @@ public class DatabaseHandler {
         return conn;
     }
 
-    // Method to close the connection safely
+    // Close the connection
     public static void closeConnection(Connection conn) {
         try {
             if (conn != null) {
@@ -123,6 +123,7 @@ public class DatabaseHandler {
 
     // For register method --- userAccountServices class
     public static void addNewUser(User user, String userName, String password) {
+        // Auto assign the id based on the user table
         int userId = assignUserID();
         user.setUserId(userId);
 
@@ -130,10 +131,10 @@ public class DatabaseHandler {
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(insertUser)) {
 
-            pstmt.setInt(1, userId);        // Auto-assigned userID
-            pstmt.setString(2, userName);   // Provided userName
-            pstmt.setString(3, password);   // Provided password
-            pstmt.setInt(4, 0);             // isAdmin is always 0 (no admin rights)
+            pstmt.setInt(1, userId);
+            pstmt.setString(2, userName);
+            pstmt.setString(3, password);
+            pstmt.setInt(4, 0);
 
             pstmt.executeUpdate();
 
@@ -147,22 +148,18 @@ public class DatabaseHandler {
     public static int getUserIdByUserName(String userName) {
         int userId = -1;  // Default value to return if user is not found
 
-        // SQL query to get the userID from the User table based on the userName
         String query = "SELECT userID FROM User WHERE userName = ?";
 
-        // Establish the connection and execute the query
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            // Set the userName parameter in the query
             pstmt.setString(1, userName);
 
-            // Execute the query and retrieve the result
             ResultSet rs = pstmt.executeQuery();
 
             // If a result is found, retrieve the userID
             if (rs.next()) {
-                userId = rs.getInt("userID");  // Get userID from result set
+                userId = rs.getInt("userID");
             }
 
         } catch (SQLException e) {
@@ -174,18 +171,15 @@ public class DatabaseHandler {
 
     // For login method --- userAccountServices class
     public static boolean passwordMatching(String userName, String password) {
-        // Query to fetch the password for the given userName
         String query = "SELECT password FROM User WHERE userName = ?;";
 
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            // Set the userName parameter
             pstmt.setString(1, userName);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // Get the password from the result set
                     String storedPassword = rs.getString("password");
                     // Check if the provided password matches the stored password
                     return storedPassword.equals(password);
@@ -197,18 +191,18 @@ public class DatabaseHandler {
         return false;
     }
 
+    // For Driver class to check if a admin is logging
+
     public static boolean isAdminUser(String userName) {
         String query = "SELECT isAdmin FROM User WHERE userName = ?;";
 
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            // Set the userName parameter
             pstmt.setString(1, userName);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // Check if the isAdmin field is 1
                     return rs.getInt("isAdmin") == 1;
                 }
             }
@@ -216,7 +210,7 @@ public class DatabaseHandler {
             System.out.println("Error checking admin status: " + e.getMessage());
         }
 
-        return false; // Return false if userName not found or error occurs
+        return false;
     }
 
     // Method to check if an article exists by title
@@ -226,24 +220,19 @@ public class DatabaseHandler {
         ResultSet resultSet = null;
 
         try {
-            // Establish a database connection
             connection = connect();
 
-            // SQL query to check if an article with the given title exists
             String query = "SELECT articleID FROM Articles WHERE title = ?";
 
-            // Prepare the statement
             statement = connection.prepareStatement(query);
             statement.setString(1, title);
 
-            // Execute the query
             resultSet = statement.executeQuery();
 
-            // If resultSet has data, the article exists
             return resultSet.next();
         } catch (SQLException e) {
             e.printStackTrace();
-            return false; // In case of an error, return false
+            return false;
         } finally {
             // Close resources
             try {
@@ -268,7 +257,7 @@ public class DatabaseHandler {
 
             if (rs.next()) {
                 int lastArticleID = rs.getInt(1); // Get the MAX(userID)
-                if (!rs.wasNull()) {          // Check if the result was NULL
+                if (!rs.wasNull()) {
                     newArticleID = lastArticleID + 1;
                 }
             }
@@ -280,39 +269,9 @@ public class DatabaseHandler {
         return newArticleID;
     }
 
-    // For storeInDatabase method --- Article class
-    public static void storeAnArticle(String title, String content, String category, String path) {
-        int articleID = assignArticleID(); // Generate the articleID
-
-        // SQL query to insert a new article into the Articles table
-        String insertArticleQuery = "INSERT INTO Articles (articleID, title, content, category, articleLink) VALUES (?, ?, ?, ?, ?);";
-
-        try (Connection conn = DriverManager.getConnection(URL);
-             PreparedStatement pstmt = conn.prepareStatement(insertArticleQuery)) {
-
-            // Set the values for the placeholders
-            pstmt.setInt(1, articleID); // Set articleID
-            pstmt.setString(2, title);  // Set title
-            pstmt.setString(3, content); // Set content
-            pstmt.setString(4, category); // Set category
-            pstmt.setString(5, path); // Set articleLink
-
-            // Execute the insert query
-            int rowsInserted = pstmt.executeUpdate();
-
-            if (rowsInserted > 0) {
-                System.out.println("Article stored successfully with articleID: " + articleID);
-            } else {
-                System.out.println("Failed to store the article.");
-            }
-        } catch (SQLException e) {
-            System.out.println("Error storing the article: " + e.getMessage());
-        }
-    }
 
     // For viewArticles method in UserActions class
     public static void addViewUserAction(int userID, int articleID) {
-        // Query to insert into UserActions
         String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'view', ?)";
 
         // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
@@ -336,7 +295,7 @@ public class DatabaseHandler {
                 }
             }
 
-            conn.commit(); // Commit transaction
+            conn.commit();
         } catch (SQLException e) {
             System.out.println("Error adding view action: " + e.getMessage());
             e.printStackTrace();
@@ -346,7 +305,6 @@ public class DatabaseHandler {
 
     // For likeArticle method -- UserActions class
     public static void addLikeUserAction(int userID, int articleID) {
-        // Query to insert into UserActions
         String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'like', ?)";
 
         // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
@@ -370,7 +328,7 @@ public class DatabaseHandler {
                 }
             }
 
-            conn.commit(); // Commit transaction
+            conn.commit();
         } catch (SQLException e) {
             System.out.println("Error adding like action: " + e.getMessage());
             e.printStackTrace();
@@ -381,7 +339,6 @@ public class DatabaseHandler {
 
     // For dislikeArticle method -- UserActions class
     public static void addDislikeUserAction(int userID, int articleID) {
-        // Query to insert into UserActions
         String insertUserActionQuery = "INSERT INTO UserActions (userID, articleID, action, timestamp) VALUES (?, ?, 'dislike', ?)";
 
         // Generate the current timestamp in the format 'yyyy-MM-dd HH:mm:ss'
@@ -389,7 +346,7 @@ public class DatabaseHandler {
                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         try (Connection conn = DriverManager.getConnection(URL)) {
-            conn.setAutoCommit(false); // Enable transaction management
+            conn.setAutoCommit(false);
 
             // Insert into UserActions
             try (PreparedStatement pstmtInsert = conn.prepareStatement(insertUserActionQuery)) {
@@ -405,7 +362,7 @@ public class DatabaseHandler {
                 }
             }
 
-            conn.commit(); // Commit transaction
+            conn.commit();
         } catch (SQLException e) {
             System.out.println("Error adding dislike action: " + e.getMessage());
             e.printStackTrace();
@@ -417,17 +374,14 @@ public class DatabaseHandler {
     // Create a array list of all existing articles (Only when the program starts)
     public static void retrieveAllArticlesFromDB(){
 
-        // SQL query to select all articles from the table
         String selectArticlesQuery = "SELECT * FROM Articles;";
 
 
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
 
-            // Execute the query to retrieve articles
             ResultSet rs = stmt.executeQuery(selectArticlesQuery);
 
-            // Temporary list to store retrieved articles
             ArrayList<Article> articles = new ArrayList<>();
 
             // Iterate through the result set
@@ -463,20 +417,17 @@ public class DatabaseHandler {
         Article newArticle = new Article(articleID, title, content, category, link);
         ArticleManager.allArticles.add(newArticle);
 
-        // SQL query to insert the new article
         String insertArticleSQL = "INSERT INTO Articles (articleID, title, content, category, articleLink) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(insertArticleSQL)) {
 
-            // Set the parameters for the insert statement
             pstmt.setInt(1, articleID);
             pstmt.setString(2, title);
             pstmt.setString(3, content);
             pstmt.setString(4, category);
             pstmt.setString(5, link);
 
-            // Execute the insert
             int rowsInserted = pstmt.executeUpdate();
             if (rowsInserted > 0) {
                 System.out.println("Article added successfully with ID: " + articleID);
@@ -639,37 +590,35 @@ public class DatabaseHandler {
     }
 
     public static void generateUserActionsCSV(String filePath) {
-        // Database connection details
         String url = "jdbc:sqlite:news_recommendation_system.db";
         String query = "SELECT userID, articleID, action FROM UserActions";
 
-        // Prepare the CSV writer
         try (FileWriter writer = new FileWriter(filePath);
              Connection connection = DriverManager.getConnection(url);
              Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
-            // Process each record from the ResultSet
+            // Process each rows from the ResultSet
             while (rs.next()) {
                 int userID = rs.getInt("userID");
                 int articleID = rs.getInt("articleID");
                 String action = rs.getString("action");
 
-                // Determine the value based on the action
+                // Assign values for each action
                 int actionValue = 0;
                 switch (action) {
                     case "view":
                         actionValue = 1;
                         break;
                     case "dislike":
-                        actionValue = -1;
+                        actionValue = -2;
                         break;
                     case "like":
                         actionValue = 2;
                         break;
                     default:
                         System.err.println("Unknown action type: " + action);
-                        continue; // Skip this row if the action is unknown
+                        continue;
                 }
 
                 // Write the row in CSV format: userID, articleID, actionValue
@@ -686,6 +635,48 @@ public class DatabaseHandler {
             e.printStackTrace();
         }
     }
+
+    // Method to check if an action already exists in the UserActions table
+    public static boolean checkActionExists(int userID, int articleID, String action) {
+        String query = "SELECT 1 FROM UserActions WHERE userID = ? AND articleID = ? AND action = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userID);
+            pstmt.setInt(2, articleID);
+            pstmt.setString(3, action);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // If the query returns a result, the action exists
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking action: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Method to delete a specific row from UserActions table
+    public static void deleteUserAction(int userID, int articleID, String action) {
+        String query = "DELETE FROM UserActions WHERE userID = ? AND articleID = ? AND action = ?";
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userID);
+            pstmt.setInt(2, articleID);
+            pstmt.setString(3, action);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected == 0) {
+                System.out.println("No matching action found to delete.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error deleting action: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
 
     public static void main(String[] args) {
         generateUserActionsCSV("Data/ActionScores.csv");

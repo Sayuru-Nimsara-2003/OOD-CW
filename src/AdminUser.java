@@ -6,7 +6,6 @@ public class AdminUser extends User{
     public static final String RED = "\u001B[31m";  // Red text
     public static final String GREEN = "\u001B[32m"; // Green text
     public static final String BLUE = "\u001B[34m"; // Blue text
-    static ArrayList<Article> allArticles = new ArrayList<Article>();
 
     public static void addArticlesMenu(User user, Scanner scanner){
         String title = "";
@@ -37,7 +36,8 @@ public class AdminUser extends User{
         link = scanner.nextLine();
 
         // Categorizing text
-        predictedCategory = KeywordExtractor.categorizeText(content);
+        KeywordExtractor categoriser = new KeywordExtractor();
+        predictedCategory = categoriser.categorise(content);
         System.out.println("Predicted category : " + predictedCategory);
 
         // Ask the user whether they want to change the category
@@ -50,7 +50,7 @@ public class AdminUser extends User{
         }
 
         if (userInput.equalsIgnoreCase("y")){
-            // Ask the user for the category if they choose to change it
+            // Ask user for the category if they choose to change it
             System.out.print("Enter the category out of AI, Health, Politics, Sports, Technology : ");
             String categoryInput = scanner.nextLine();
 
@@ -96,16 +96,16 @@ public class AdminUser extends User{
             confirmation = scanner.nextLine();
 
             if (confirmation.equalsIgnoreCase("y")){
-                // Add to the database and create an instance in that database
+                // Add to the database and create an User instance in that database
                 DatabaseHandler.addNewArticle(title, content, category, link);
                 System.out.println(GREEN + "Article added successfully. Redirecting to Main Menu\n");
                 Driver.adminMainMenu(user, scanner);
-                return; // Exit after adding the article
+                return;
 
             } else if (confirmation.equalsIgnoreCase("n")) {
                 System.out.println();
                 Driver.adminMainMenu(user, scanner);
-                return; // Exit if user cancels
+                return;
 
             } else {
                 System.out.println(RED + "Invalid input, Try again!" + RESET);

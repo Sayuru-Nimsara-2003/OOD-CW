@@ -41,6 +41,7 @@ public class UserAccountServices implements UserAccountManager{
     }
 
 
+    // Will be used when triggered by Driver class
     @Override
     public void login(User user, String userName, String password) {
         user.setUserName(userName);
@@ -48,6 +49,7 @@ public class UserAccountServices implements UserAccountManager{
         user.setUserId(DatabaseHandler.getUserIdByUserName(userName));
     }
 
+    // Will be used when triggered by Driver class
     @Override
     public void Register(User user, String userName, String password){
         user.setUserName(userName);
@@ -55,6 +57,7 @@ public class UserAccountServices implements UserAccountManager{
         DatabaseHandler.addNewUser(user, userName, password);
     }
 
+    // Will be used when triggered by Driver class
     @Override
     public void logout(User user){
         user.setUserId(-1);

@@ -1,4 +1,4 @@
-public class User {             // Instances of this will be created when a user is logged in or registered
+public class User {             // An instance of this will be created when a user is logged in or registered
     private String userName;
     private String password;
     private int userId;

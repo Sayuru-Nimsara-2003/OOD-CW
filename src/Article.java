@@ -30,6 +30,7 @@ public class Article {
     public String getLink(){return link;}
     public String getCategory(){return category;}
 
+    // This method displays the article in a web browser
     public void displayArticle(){
         String url = this.getLink();
         try {
@@ -39,7 +40,6 @@ public class Article {
 
                 // Check if the browse action is supported
                 if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                    // Open the URL
                     desktop.browse(new URI(url));
                     System.out.println("Web link opened successfully!");
                 } else {

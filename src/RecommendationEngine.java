@@ -25,12 +25,9 @@ public class RecommendationEngine {
         ArrayList<Integer> recommendedArticleIds = new ArrayList<>();
 
         try {
-            // File path to the CSV
-            File file = new File("Data/ActionScores.csv");  // Adjust path if necessary
+            File file = new File("Data/ActionScores.csv");
 
-            // Create the FileDataModel and load the data
             FileDataModel model = new FileDataModel(file);
-
 
             // Compute similarity between users using Pearson Correlation (common similarity measure)
             UserSimilarity similarity = new EuclideanDistanceSimilarity(model);
@@ -69,7 +66,6 @@ public class RecommendationEngine {
         ArrayList<Integer> recommendations = null;
 
         try {
-            // Attempt to get recommendations
             recommendations = recommendArticles(user);
 
             // Check if there are no recommendations
@@ -82,7 +78,7 @@ public class RecommendationEngine {
                 System.out.println((i+1) + ") " + ArticleManager.allArticles.get(recommendations.get(i) - 1 ).getTitle());
             }
         } catch (Exception e) {
-            // Handle the case where there are no recommendations or an error occurs
+            // Handle the case where there are no recommendations
             System.out.println(RED + "No Recommendations due to insufficient user activity" + RESET);
         }
 
@@ -90,7 +86,7 @@ public class RecommendationEngine {
         String userInput = "";
 
         while (true) {
-            System.out.println("To go back press B");
+            System.out.println("\nTo go back press B");
             System.out.print(BLUE + "Enter your input: " + RESET);
             userInput = scanner.nextLine();
 
@@ -112,7 +108,7 @@ public class RecommendationEngine {
         String userInput = "";
 
         while (true) {
-            System.out.println("To view the article, press V");
+            System.out.println("\nTo view the article, press V");
             System.out.println("Press B to go back to recommendation list");
             System.out.print(BLUE + "  Enter your input : " + RESET);
             userInput = scanner.nextLine();
@@ -121,31 +117,62 @@ public class RecommendationEngine {
             if (userInput.equalsIgnoreCase("v")) {
                 article.displayArticle();
 
-                // Add to the database
-                newAction.viewArticle(user.getUserId(), articleID);
+                // Refresh ActionScore.csv
+                DatabaseHandler.generateUserActionsCSV("Data/ActionScores.csv");
+
+                if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "view")) {
+                    // If not viewed before add to the database using UserAction class
+                    newAction.viewArticle(user.getUserId(), article.getArticleID());
+                }
 
                 // Direct to like, unlike and back
                 String userInput2 = "";
 
                 while (true) {
-                    System.out.println("Press L to like");
-                    System.out.println("Press D to dislike");
+                    if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "like")) {
+                        System.out.println("\nPress L to like");
+                    }
+                    if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "dislike")) {
+                        System.out.println("Press D to dislike");
+                    }
                     System.out.println("Press B to go back to recommendation list");
                     System.out.println(BLUE + "  Enter your input : " + RESET);
                     userInput2 = scanner.nextLine();
 
                     if (userInput2.equalsIgnoreCase("l")) {
-                        // Add to the database
-                        newAction.likeArticle(user.getUserId(), articleID);
+                        if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "like")){
+                            // Add to the database using UserAction class
+                            newAction.likeArticle(user.getUserId(), article.getArticleID());
+
+                            //Also remove the dislike if exists
+                            if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"dislike")){
+                                newAction.removeAction(user.getUserId(), article.getArticleID(),"dislike" );
+                            }
+
+                        } else {
+                            System.out.println(RED + "You have already liked before!" + RESET);
+                        }
 
                         // Go back to article list
                         recommendationMenu(user, scanner);
+
                     } else if (userInput2.equalsIgnoreCase("d")) {
-                        // Add to the database
-                        newAction.dislikeArticle(user.getUserId(), articleID);
+                        if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "dislike")) {
+                            // Add to the database using UserAction class
+                            newAction.dislikeArticle(user.getUserId(), article.getArticleID());
+
+                            // Also remove the like if exists
+                            if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"like")){
+                                newAction.removeAction(user.getUserId(), article.getArticleID(),"like" );
+                            }
+
+                        } else {
+                            System.out.println(RED + "You have already disliked before!");
+                        }
 
                         // Go back to article list
                         recommendationMenu(user, scanner);
+
                     } else if (userInput2.equalsIgnoreCase("b")) {
                         //Go back to article list
                         recommendationMenu(user, scanner);

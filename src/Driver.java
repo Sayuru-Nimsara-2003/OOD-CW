@@ -21,13 +21,17 @@ public class Driver {
         // Create instances for all existing articles
         DatabaseHandler.retrieveAllArticlesFromDB();
 
+        // Create ActionScores.csv
+        DatabaseHandler.generateUserActionsCSV("Data/ActionScores.csv");
+
+
         // Initial start of the UI
         initialMenu(user, scanner);
     }
 
     public static void initialMenu(User user, Scanner scanner){
-        System.out.println("Hello, Welcome to articleReader"); // Change text color and size if possible
-        System.out.println("---------------------------------------");
+        System.out.println(BLUE + "\nHello, Welcome to articleReader" ); // Change text color and size if possible
+        System.out.println("---------------------------------------" + RESET);
 
         boolean validInput = false;
 
@@ -48,7 +52,7 @@ public class Driver {
                 validInput = true;
                 System.exit(0);
             } else {
-                System.out.println(RED + "Invalid Input! Retry\n"+ RESET); // Red color
+                System.out.println(RED + "Invalid Input! Retry\n"+ RESET);
             }
         }
     }
@@ -184,7 +188,7 @@ public class Driver {
         String userInput;
 
         while (true){
-            System.out.println(BLUE + "Admin Main Menu" + RESET);
+            System.out.println(BLUE + "\nAdmin Main Menu" + RESET);
             System.out.println(" To add articles enter A");
             System.out.println(" To logout enter L");
             System.out.println(" To quit application press Q ");
@@ -210,11 +214,10 @@ public class Driver {
 
     // Main menu for normal users
     public static void normalMainMenu(User user, Scanner scanner){
-        DatabaseHandler.generateUserActionsCSV("Data/ActionScores.csv");
         String userInput;
 
         while (true) {
-            System.out.println(BLUE + "Main Menu" + RESET);
+            System.out.println(BLUE + "\nMain Menu" + RESET);
             System.out.println(" To access all articles enter A");
             System.out.println(" To get recommendations enter R");
             System.out.println(" To logout enter L");

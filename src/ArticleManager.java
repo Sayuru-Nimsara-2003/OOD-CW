@@ -16,7 +16,7 @@ public class ArticleManager {
         String userInput;
 
         while (true){
-            System.out.println("Select the category");
+            System.out.println("\nSelect the category");
             System.out.println("\tPress A for AI");
             System.out.println("\tPress H for Health");
             System.out.println("\tPress P for Politics");
@@ -53,7 +53,6 @@ public class ArticleManager {
         ArrayList<Integer> instanceIndexList = new ArrayList<>();
         int count = 0; // Counter for display numbering
 
-        // Iterate through allArticles with an index
         for (int i = 0; i < allArticles.size(); i++) {
             Article article = allArticles.get(i);
             if (article.getCategory().equals(category)) {
@@ -95,7 +94,7 @@ public class ArticleManager {
         String userInput = "";
 
         while (true){
-            System.out.println("To view the article, press V");
+            System.out.println("\nTo view the article, press V");
             System.out.println("Press B to go back to article list");
             System.out.print(BLUE + "  Enter your input : " + RESET);
             userInput = scanner.nextLine();
@@ -104,31 +103,62 @@ public class ArticleManager {
             if (userInput.equalsIgnoreCase("v")){
                 article.displayArticle();
 
-                // Add to the database
-                newAction.viewArticle(user.getUserId(), article.getArticleID());
+                // Refresh ActionScore.csv
+                DatabaseHandler.generateUserActionsCSV("Data/ActionScores.csv");
 
-                // Direct to like, unlike and back
+                if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "view")) {
+                    // If not viewed before add to the database using UserAction class
+                    newAction.viewArticle(user.getUserId(), article.getArticleID());
+                }
+
+
                 String userInput2 = "";
 
                 while (true){
-                    System.out.println("Press L to like");
-                    System.out.println("Press D to dislike");
+                    if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "like")) {
+                        System.out.println("\nPress L to like");
+                    }
+                    if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "dislike")) {
+                        System.out.println("Press D to dislike");
+                    }
                     System.out.println("Press B to go back to article list");
                     System.out.print(BLUE + "  Enter your input : " + RESET);
                     userInput2 = scanner.nextLine();
 
                     if (userInput2.equalsIgnoreCase("l")){
-                        // Add to the database
-                        newAction.likeArticle(user.getUserId(), article.getArticleID());
+                        if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "like")){
+                            // Add to the database using UserAction class
+                            newAction.likeArticle(user.getUserId(), article.getArticleID());
+
+                            //Also remove the dislike if exists
+                            if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"dislike")){
+                                newAction.removeAction(user.getUserId(), article.getArticleID(),"dislike" );
+                            }
+
+                        } else {
+                            System.out.println(RED + "You have already liked before!" + RESET);
+                        }
 
                         // Go back to article list
                         articlesMenu(category,user,scanner);
+
                     } else if (userInput2.equalsIgnoreCase("d")) {
-                        // Add to the database
-                        newAction.dislikeArticle(user.getUserId(), article.getArticleID());
+                        if (!newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(), "dislike")) {
+                            // Add to the database using UserAction class
+                            newAction.dislikeArticle(user.getUserId(), article.getArticleID());
+
+                            // Also remove the like if exists
+                            if (newAction.actionAlreadyHappened(user.getUserId(), article.getArticleID(),"like")){
+                                newAction.removeAction(user.getUserId(), article.getArticleID(),"like" );
+                            }
+
+                        } else {
+                            System.out.println(RED + "You have already disliked before!");
+                        }
 
                         // Go back to article list
                         articlesMenu(category,user,scanner);
+
                     } else if (userInput2.equalsIgnoreCase("b")) {
                         //Go back to article list
                         articlesMenu(category,user,scanner);
